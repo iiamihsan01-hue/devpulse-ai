@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devpulse-ai"
+version = "0.1.0"
+description = "Offline developer assistant powered by Ollama for git repository analysis"
+requires-python = ">=3.10"
+dependencies = [
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "GitPython>=3.1.40",
+    "ollama>=0.1.6",
+    "pydantic>=2.5.0",
+]
+
+[project.scripts]
+devpulse = "src.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

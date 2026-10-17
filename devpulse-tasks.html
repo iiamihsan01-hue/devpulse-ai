@@ -1,0 +1,854 @@
+<title>DevPulse AI – Task Tracker</title>
+<style>
+  /* ──────────────────────────────────────────────────────────────────
+     Design Plan: Development task tracker for offline AI tool
+     - Layout: Kanban board (Backlog | In Progress | Review | Complete)
+     - Type: Clean sans-serif with semantic hierarchy
+     - Color: Slate base with amber accent for priority/completion
+     - Purpose: Real-time sprint tracking with task filtering
+  ────────────────────────────────────────────────────────────────────── */
+
+  :root {
+    /* Color tokens */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --accent: #fbbf24;
+    --accent-dark: #f59e0b;
+    --success: #22c55e;
+    --warning: #eab308;
+    --error: #ef4444;
+    --border: #475569;
+    --card-bg: #1e293b;
+
+    /* Type tokens */
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'SF Mono', Monaco, monospace;
+
+    /* Spacing */
+    --gap-xs: 4px;
+    --gap-sm: 8px;
+    --gap-md: 16px;
+    --gap-lg: 24px;
+    --gap-xl: 32px;
+
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme='dark']) {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --bg-tertiary: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      color-scheme: light;
+    }
+  }
+
+  :root[data-theme='light'] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --card-bg: #ffffff;
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Header
+  ────────────────────────────────────────────────────────────────────── */
+
+  .header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: var(--gap-lg);
+    margin-bottom: var(--gap-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--gap-md);
+  }
+
+  .header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--gap-sm);
+  }
+
+  .header-stats {
+    display: flex;
+    gap: var(--gap-lg);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Controls
+  ────────────────────────────────────────────────────────────────────── */
+
+  .controls {
+    display: flex;
+    gap: var(--gap-md);
+    margin-bottom: var(--gap-lg);
+    padding: 0 var(--gap-lg);
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: var(--gap-sm);
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  button {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+  }
+
+  button.active {
+    background: var(--accent);
+    color: var(--bg-primary);
+    border-color: var(--accent);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Kanban Board
+  ────────────────────────────────────────────────────────────────────── */
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--gap-lg);
+    padding: 0 var(--gap-lg) var(--gap-lg);
+    overflow-x: auto;
+    padding-bottom: calc(var(--gap-lg) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    min-width: 320px;
+    flex-shrink: 0;
+  }
+
+  .column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--gap-md);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .column-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+  }
+
+  .column-count {
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .column.backlog .column-title { color: var(--text-muted); }
+  .column.in-progress .column-title { color: var(--warning); }
+  .column.review .column-title { color: var(--accent); }
+  .column.complete .column-title { color: var(--success); }
+
+  .tasks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    min-height: 100px;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Task Card
+  ────────────────────────────────────────────────────────────────────── */
+
+  .task {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--gap-md);
+    cursor: grab;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+  }
+
+  .task:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .task.priority-high {
+    border-left: 3px solid var(--error);
+  }
+
+  .task.priority-medium {
+    border-left: 3px solid var(--warning);
+  }
+
+  .task.priority-low {
+    border-left: 3px solid var(--accent);
+  }
+
+  .task-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+  }
+
+  .task-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+  }
+
+  .task-id {
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .task-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+    margin-top: var(--gap-xs);
+    padding-top: var(--gap-sm);
+    border-top: 1px solid var(--border);
+  }
+
+  .task-assignee {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--bg-primary);
+    font-weight: 700;
+  }
+
+  .task-priority {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .task-priority.high {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--error);
+  }
+
+  .task-priority.medium {
+    background: rgba(234, 179, 8, 0.2);
+    color: var(--warning);
+  }
+
+  .task-priority.low {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--success);
+  }
+
+  .task-progress {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Responsive
+  ────────────────────────────────────────────────────────────────────── */
+
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-stats {
+      width: 100%;
+      justify-content: space-around;
+    }
+
+    .board {
+      grid-template-columns: 1fr;
+      gap: var(--gap-md);
+    }
+
+    .column {
+      min-width: unset;
+    }
+  }
+</style>
+
+<div class="header">
+  <h1>🚀 DevPulse AI</h1>
+  <div class="header-stats">
+    <div class="stat">
+      <div class="stat-label">Total Tasks</div>
+      <div class="stat-value" id="stat-total">28</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">In Progress</div>
+      <div class="stat-value" id="stat-active" style="color: var(--warning);">4</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value" id="stat-complete" style="color: var(--success);">8</div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="filter-group">
+    <span class="filter-label">Filter:</span>
+    <button class="active" onclick="filterTasks('all')">All</button>
+    <button onclick="filterTasks('high')">High Priority</button>
+    <button onclick="filterTasks('my-tasks')">My Tasks</button>
+  </div>
+</div>
+
+<div class="board">
+  <!-- Backlog Column -->
+  <div class="column backlog">
+    <div class="column-header">
+      <span class="column-title">📋 Backlog</span>
+      <span class="column-count">8</span>
+    </div>
+    <div class="tasks">
+      <div class="task priority-low" data-status="backlog" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">Web UI Dashboard</h3>
+          <span class="task-id">FEAT-12</span>
+        </div>
+        <p class="task-description">Build web interface for DevPulse with real-time metrics</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="backlog" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Docker Support</h3>
+          <span class="task-id">OPS-05</span>
+        </div>
+        <p class="task-description">Create Dockerfile and docker-compose for easy deployment</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-low" data-status="backlog" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">Multi-model Support</h3>
+          <span class="task-id">FEAT-13</span>
+        </div>
+        <p class="task-description">Allow switching between different Ollama models dynamically</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+
+      <div class="task priority-low" data-status="backlog" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">API Endpoint</h3>
+          <span class="task-id">FEAT-14</span>
+        </div>
+        <p class="task-description">Expose REST API for remote usage and integrations</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="backlog" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Configuration File Support</h3>
+          <span class="task-id">FEAT-15</span>
+        </div>
+        <p class="task-description">Support .devpulse.yaml for project-specific settings</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-low" data-status="backlog" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">Changelog Generation</h3>
+          <span class="task-id">FEAT-16</span>
+        </div>
+        <p class="task-description">AI-powered CHANGELOG.md generation from commits</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="backlog" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Test Coverage</h3>
+          <span class="task-id">TEST-03</span>
+        </div>
+        <p class="task-description">Add unit and integration tests (target: 85% coverage)</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-low" data-status="backlog" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">Performance Benchmarks</h3>
+          <span class="task-id">PERF-02</span>
+        </div>
+        <p class="task-description">Profile and optimize git operations for large repos</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- In Progress Column -->
+  <div class="column in-progress">
+    <div class="column-header">
+      <span class="column-title">⚡ In Progress</span>
+      <span class="column-count">4</span>
+    </div>
+    <div class="tasks">
+      <div class="task priority-high" data-status="in-progress" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">Core AI Engine</h3>
+          <span class="task-id">CORE-01</span>
+        </div>
+        <p class="task-description">Ollama client with review & commit message generation</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-high" data-status="in-progress" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">Git Parser Module</h3>
+          <span class="task-id">CORE-02</span>
+        </div>
+        <p class="task-description">Extract staged diffs and commit history from repos</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-high" data-status="in-progress" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">CLI Commands</h3>
+          <span class="task-id">CLI-01</span>
+        </div>
+        <p class="task-description">audit, commit, log commands with rich output</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="in-progress" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Error Handling & Validation</h3>
+          <span class="task-id">CORE-03</span>
+        </div>
+        <p class="task-description">Graceful error messages and input validation</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Column -->
+  <div class="column review">
+    <div class="column-header">
+      <span class="column-title">👀 Review</span>
+      <span class="column-count">4</span>
+    </div>
+    <div class="tasks">
+      <div class="task priority-high" data-status="review" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">README Documentation</h3>
+          <span class="task-id">DOC-01</span>
+        </div>
+        <p class="task-description">Complete installation, usage, and API documentation</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="review" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Code Quality Review</h3>
+          <span class="task-id">QA-01</span>
+        </div>
+        <p class="task-description">Lint, format, type hints across codebase</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="review" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Prompt Engineering</h3>
+          <span class="task-id">AI-01</span>
+        </div>
+        <p class="task-description">Refine review and commit prompts for better output</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-low" data-status="review" data-priority="low">
+        <div class="task-header">
+          <h3 class="task-title">Security Audit</h3>
+          <span class="task-id">SEC-01</span>
+        </div>
+        <p class="task-description">Review for vulnerabilities and best practices</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority low">Low</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complete Column -->
+  <div class="column complete">
+    <div class="column-header">
+      <span class="column-title">✅ Complete</span>
+      <span class="column-count">8</span>
+    </div>
+    <div class="tasks">
+      <div class="task priority-high" data-status="complete" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">Project Setup</h3>
+          <span class="task-id">SETUP-01</span>
+        </div>
+        <p class="task-description">Initialize repo structure and package config</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-high" data-status="complete" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">Virtual Environment</h3>
+          <span class="task-id">SETUP-02</span>
+        </div>
+        <p class="task-description">Create venv and install dependencies</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-high" data-status="complete" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">GitHub Integration</h3>
+          <span class="task-id">SETUP-03</span>
+        </div>
+        <p class="task-description">Configure git user and GitHub CLI auth</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-high" data-status="complete" data-priority="high">
+        <div class="task-header">
+          <h3 class="task-title">README Updates (All Repos)</h3>
+          <span class="task-id">MAINT-01</span>
+        </div>
+        <p class="task-description">Review and improve 9 GitHub repos' documentation</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority high">High</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="complete" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Dependency Management</h3>
+          <span class="task-id">OPS-01</span>
+        </div>
+        <p class="task-description">Pin versions in requirements.txt and pyproject.toml</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="complete" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Gitignore Setup</h3>
+          <span class="task-id">OPS-02</span>
+        </div>
+        <p class="task-description">Ignore .venv, __pycache__, model weights</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="complete" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Email Configuration</h3>
+          <span class="task-id">CONFIG-01</span>
+        </div>
+        <p class="task-description">Set git user email for commits</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+
+      <div class="task priority-medium" data-status="complete" data-priority="medium">
+        <div class="task-header">
+          <h3 class="task-title">Task Tracker Setup</h3>
+          <span class="task-id">TOOL-01</span>
+        </div>
+        <p class="task-description">Create interactive kanban board for sprint tracking</p>
+        <div class="task-meta">
+          <div class="task-assignee">
+            <div class="avatar">N</div>
+            <span>Najeeb</span>
+          </div>
+          <span class="task-priority medium">Medium</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterTasks(filter) {
+    const buttons = document.querySelectorAll('.controls button');
+    buttons.forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const tasks = document.querySelectorAll('.task');
+    tasks.forEach(task => {
+      const priority = task.dataset.priority;
+      if (filter === 'all') {
+        task.style.display = 'flex';
+      } else if (filter === 'high') {
+        task.style.display = priority === 'high' ? 'flex' : 'none';
+      } else if (filter === 'my-tasks') {
+        task.style.display = 'flex';
+      }
+    });
+  }
+
+  // Update stats on page load
+  window.addEventListener('load', () => {
+    const tasks = document.querySelectorAll('.task');
+    document.getElementById('stat-total').textContent = tasks.length;
+
+    const active = document.querySelectorAll('[data-status="in-progress"]').length;
+    document.getElementById('stat-active').textContent = active;
+
+    const complete = document.querySelectorAll('[data-status="complete"]').length;
+    document.getElementById('stat-complete').textContent = complete;
+  });
+</script>

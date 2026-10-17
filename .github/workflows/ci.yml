@@ -15,6 +15,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.11', '3.12', '3.13']
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
@@ -58,6 +60,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
@@ -84,21 +88,18 @@ jobs:
         password: ${{ secrets.PYPI_API_TOKEN }}
 
     - name: Create GitHub Release
-      uses: actions/create-release@v1
+      run: |
+        gh release create ${{ github.ref }} \
+          --title "Release ${{ github.ref }}" \
+          --notes "📦 DevPulse AI ${{ github.ref }}
+
+        Changes in this Release
+        - See [commits](https://github.com/${{ github.repository }}/commits/${{ github.ref }}) for details
+
+        ## Installation
+        \`\`\`bash
+        pip install devpulse-ai
+        \`\`\`" \
+          dist/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: |
-          📦 DevPulse AI ${{ github.ref }}
-
-          Changes in this Release
-          - See [commits](https://github.com/${{ github.repository }}/commits/${{ github.ref }}) for details
-
-          ## Installation
-          ```bash
-          pip install devpulse-ai
-          ```
-        draft: false
-        prerelease: false

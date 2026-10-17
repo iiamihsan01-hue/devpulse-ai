@@ -92,7 +92,8 @@ class AIEngine:
         try:
             self.client.list()
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Connection error: {e}")
             return False
 
     # ------------------------------------------------------------------

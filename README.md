@@ -3,8 +3,10 @@
 **Offline AI-powered developer assistant** that runs locally using Ollama and analyzes git repositories.
 
 [![GitHub](https://img.shields.io/badge/GitHub-iiamihsan01--hue%2Fdevpulse--ai-blue?logo=github)](https://github.com/iiamihsan01-hue/devpulse-ai)
+[![PyPI](https://img.shields.io/badge/PyPI-devpulse--ai-blue?logo=pypi)](https://pypi.org/project/devpulse-ai/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Tests](https://github.com/iiamihsan01-hue/devpulse-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/iiamihsan01-hue/devpulse-ai/actions)
 
 ## 🚀 Features
 

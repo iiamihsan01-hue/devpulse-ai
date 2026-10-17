@@ -5,8 +5,29 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "devpulse-ai"
 version = "0.1.0"
-description = "Offline developer assistant powered by Ollama for git repository analysis"
+description = "Offline AI-powered developer assistant powered by Ollama for git repository analysis"
+readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Najeeb", email = "iiam.ihsan01@gmail.com"}
+]
+keywords = ["ai", "git", "code-review", "commit-messages", "ollama", "developer-tools", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
 dependencies = [
     "typer[all]>=0.9.0",
     "rich>=13.0.0",
@@ -15,9 +36,38 @@ dependencies = [
     "pydantic>=2.5.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/iiamihsan01-hue/devpulse-ai"
+Documentation = "https://github.com/iiamihsan01-hue/devpulse-ai#readme"
+Repository = "https://github.com/iiamihsan01-hue/devpulse-ai.git"
+Issues = "https://github.com/iiamihsan01-hue/devpulse-ai/issues"
+
 [project.scripts]
 devpulse = "src.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
